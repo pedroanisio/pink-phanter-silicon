@@ -1,10 +1,10 @@
-"""Tests for codebase_refactor.models."""
+"""Tests for pps_refold.models."""
 
 from __future__ import annotations
 
 import pytest
 
-from codebase_refactor.models import (
+from pps_refold.models import (
     EXECUTE_ONLY_PHASES,
     MUTATION_PHASES,
     SCAN_ONLY_PHASES,

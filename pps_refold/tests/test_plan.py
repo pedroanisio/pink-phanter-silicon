@@ -1,8 +1,8 @@
-"""Tests for codebase_refactor.extern.plan module."""
+"""Tests for pps_refold.extern.plan module."""
 
 import pytest
 
-from codebase_refactor.extern.plan import (
+from pps_refold.extern.plan import (
     count_plan_moves,
     deserialize_yaml,
     plan_delete_empty,
@@ -10,7 +10,7 @@ from codebase_refactor.extern.plan import (
     serialize_yaml,
     validate_plan,
 )
-from codebase_refactor.models import Lang, MoveOp, RefactorPlan
+from pps_refold.models import Lang, MoveOp, RefactorPlan
 
 # ---------------------------------------------------------------------------
 # Helpers

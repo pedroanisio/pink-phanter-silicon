@@ -1,4 +1,4 @@
-"""Allow running via: python -m codebase_refactor"""
+"""Allow running via: python -m pps_refold"""
 
 import sys
 

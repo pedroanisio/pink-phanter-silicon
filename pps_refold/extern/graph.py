@@ -72,11 +72,14 @@ def detect_smells(
             smells.append(f"God module: {file_path} ({len(importers)} importers)")
 
     # -- Orphan files ----------------------------------------------------------
+    source_langs = {Lang.PYTHON, Lang.JAVASCRIPT, Lang.TYPESCRIPT}
     files_that_import: set[str] = set()
     for importers in reverse_graph.values():
         files_that_import.update(importers)
 
-    for rel_path in file_inventory:
+    for rel_path, entry in file_inventory.items():
+        if entry.lang not in source_langs:
+            continue
         basename = Path(rel_path).name
         if basename == "__init__.py":
             continue

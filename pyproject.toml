@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codebase-refactor"
+name = "pps-refold"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["pyyaml>=6.0"]
@@ -19,14 +19,14 @@ dev = [
 ]
 
 [project.scripts]
-codebase-refactor = "codebase_refactor.cli:main"
+pps-refold = "pps_refold.cli:main"
 
 [tool.pytest.ini_options]
-testpaths = ["codebase_refactor/tests"]
+testpaths = ["pps_refold/tests"]
 
 [tool.coverage.run]
-source = ["codebase_refactor"]
-omit = ["codebase_refactor/tests/*"]
+source = ["pps_refold"]
+omit = ["pps_refold/tests/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -65,7 +65,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"codebase_refactor/tests/*" = [
+"pps_refold/tests/*" = [
     "S",        # security warnings in tests
     "PLR2004",  # magic values in tests
     "SLF001",   # private member access in tests
@@ -77,15 +77,15 @@ ignore = [
     "PTH",      # os.path in test assertions is fine
     "F841",     # unused variables in tests — sometimes intentional for side effects
 ]
-"codebase_refactor/engine.py" = [
+"pps_refold/engine.py" = [
     "PTH",      # os.path used extensively — pathlib conversion would be disruptive
     "S112",     # try-except-continue is intentional for resilient file processing
     "BLE001",   # broad except in backup/rewrite loops for resilience
 ]
-"codebase_refactor/extern/preflight.py" = [
+"pps_refold/extern/preflight.py" = [
     "PTH",      # os.path matches the function signatures from the spec
 ]
-"codebase_refactor/extern/imports.py" = [
+"pps_refold/extern/imports.py" = [
     "PTH",      # os.path.relpath/normpath have no clean pathlib equivalent
 ]
 
@@ -99,7 +99,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = "codebase_refactor.tests.*"
+module = "pps_refold.tests.*"
 disallow_untyped_defs = false
 disallow_untyped_calls = false
 disallow_incomplete_defs = false

@@ -1,11 +1,11 @@
-"""Tests for codebase_refactor.extern.filesystem."""
+"""Tests for pps_refold.extern.filesystem."""
 
 from __future__ import annotations
 
 import hashlib
 import re
 
-from codebase_refactor.extern.filesystem import (
+from pps_refold.extern.filesystem import (
     copy_file,
     detect_lang,
     dir_exists,
@@ -20,7 +20,7 @@ from codebase_refactor.extern.filesystem import (
     walk_tree,
     write_file,
 )
-from codebase_refactor.models import Lang
+from pps_refold.models import Lang
 
 # -- detect_lang ---------------------------------------------------------------
 
@@ -172,12 +172,26 @@ def test_walk_tree_ignore(tmp_path):
     hidden.mkdir()
     (hidden / "secret.py").write_text("secret")
 
-    entries = walk_tree(str(tmp_path), ignore_patterns={"*.pyc", ".hidden"})
+    entries = walk_tree(str(tmp_path), ignore_patterns={r"\.pyc$", r"^\.hidden$"})
 
     assert "keep.py" in entries
     assert "skip.pyc" not in entries
     # The entire .hidden directory should be pruned.
     assert all(not key.startswith(".hidden") for key in entries)
+
+
+def test_walk_tree_default_ignores(tmp_path):
+    (tmp_path / "keep.py").write_text("keep")
+
+    for dirname in [".git", ".venv", "node_modules", "__pycache__", ".mypy_cache"]:
+        d = tmp_path / dirname
+        d.mkdir()
+        (d / "file.py").write_text("ignored")
+
+    entries = walk_tree(str(tmp_path), ignore_patterns=set())
+
+    assert "keep.py" in entries
+    assert len(entries) == 1
 
 
 def test_walk_tree_hashes(tmp_path):

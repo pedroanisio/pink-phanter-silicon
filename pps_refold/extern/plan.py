@@ -27,13 +27,14 @@ _EXT_TO_LANG: dict[str, Lang] = {
 # ---------------------------------------------------------------------------
 
 
-def serialize_yaml(plan: RefactorPlan) -> str:
+def serialize_yaml(plan: RefactorPlan, smells: list[str] | None = None) -> str:
     """Dump a *RefactorPlan* to a YAML string."""
     data: dict[str, Any] = {
         "version": plan.version,
         "root": plan.root,
         "delete_empty": plan.delete_empty,
         "created_at": plan.created_at,
+        "smells": smells or [],
         "moves": [
             {
                 "source": m.source,

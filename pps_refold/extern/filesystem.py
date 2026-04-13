@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shutil
-from fnmatch import fnmatch
 from pathlib import Path
 
-from codebase_refactor.models import FileEntry, Lang
+from pps_refold.models import FileEntry, Lang
 
 # ---- extension map --------------------------------------------------------
 
@@ -79,18 +79,34 @@ def read_file(path: str) -> str:
         return p.read_text(encoding="latin-1")
 
 
+_DEFAULT_IGNORE: set[str] = {
+    r"^\.git$",
+    r"^\.venv$",
+    r"^venv$",
+    r"^node_modules$",
+    r"^__pycache__$",
+    r"^\.mypy_cache$",
+    r"^\.pytest_cache$",
+    r"^\.ruff_cache$",
+    r"\.pyc$",
+}
+
+
 def walk_tree(root: str, ignore_patterns: set[str]) -> dict[str, FileEntry]:
     """Recursively walk *root*, returning ``{relative_path: FileEntry}``.
 
-    *ignore_patterns* are fnmatch-style patterns matched against individual
-    directory and file names.  Matching directories are pruned entirely.
+    *ignore_patterns* are regex patterns matched against individual directory
+    and file names.  Matching directories are pruned entirely.  A set of
+    sensible defaults (e.g. ``.git``, ``__pycache__``, ``node_modules``) is
+    always included.
     Relative paths use forward slashes regardless of the OS.
     """
     entries: dict[str, FileEntry] = {}
     root_path = Path(root)
+    compiled = [re.compile(pat) for pat in _DEFAULT_IGNORE | ignore_patterns]
 
     def _ignored(name: str) -> bool:
-        return any(fnmatch(name, pat) for pat in ignore_patterns)
+        return any(pat.search(name) for pat in compiled)
 
     for dirpath, dirnames, filenames in os.walk(root_path):
         # Prune ignored directories in-place so os.walk skips them.

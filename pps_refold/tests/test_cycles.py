@@ -1,9 +1,9 @@
-"""Tests for codebase_refactor.extern.cycles."""
+"""Tests for pps_refold.extern.cycles."""
 
 from __future__ import annotations
 
-from codebase_refactor.extern.cycles import detect_move_cycles
-from codebase_refactor.models import Lang, MoveOp
+from pps_refold.extern.cycles import detect_move_cycles
+from pps_refold.models import Lang, MoveOp
 
 # -- helper -------------------------------------------------------------------
 

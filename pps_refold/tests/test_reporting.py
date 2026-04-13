@@ -1,11 +1,11 @@
-"""Tests for codebase_refactor.extern.reporting."""
+"""Tests for pps_refold.extern.reporting."""
 
 from __future__ import annotations
 
 import json
 import re
 
-from codebase_refactor.extern.reporting import serialize_report, timestamp_now
+from pps_refold.extern.reporting import serialize_report, timestamp_now
 
 # -- serialize_report ----------------------------------------------------------
 

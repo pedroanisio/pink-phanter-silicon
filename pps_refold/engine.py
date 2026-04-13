@@ -290,6 +290,8 @@ class Engine:
             self.inp.root_dir,
         )
         self.state.phase = Phase.PROPOSING
+        for smell in self.state.smells:
+            self.state.log.append(f"  {smell}")
         self.state.log.append(f"Detected {len(self.state.smells)} smells")
 
     def _action_propose_plan(self) -> None:
@@ -302,7 +304,7 @@ class Engine:
             created_at=timestamp_now(),
         )
         self.state.plan = plan
-        self.output.plan_yaml = serialize_yaml(plan)
+        self.output.plan_yaml = serialize_yaml(plan, smells=self.state.smells)
         self.state.phase = Phase.DONE
         self.state.log.append("Proposal written")
 

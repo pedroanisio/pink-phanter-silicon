@@ -1,11 +1,11 @@
-"""Tests for codebase_refactor.extern.imports module."""
+"""Tests for pps_refold.extern.imports module."""
 
-from codebase_refactor.extern.imports import (
+from pps_refold.extern.imports import (
     extract_imports,
     resolve_import,
     rewrite_imports,
 )
-from codebase_refactor.models import Lang
+from pps_refold.models import Lang
 
 # ---------------------------------------------------------------------------
 # extract_imports -- Python

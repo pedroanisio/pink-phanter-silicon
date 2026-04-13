@@ -2,14 +2,18 @@ import argparse
 import sys
 from pathlib import Path
 
+import yaml
+
 from .engine import Engine
+from .extern.filesystem import walk_tree
+from .extern.reporting import timestamp_now
 from .models import Command, EngineInput
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="codebase-refactor",
-        description="Scan, plan, and execute structural codebase refactors.",
+        prog="pps-refold",
+        description="Scan, plan, and execute structural refactors.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -20,7 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--ignore",
         action="append",
         default=[],
-        help="Glob pattern to ignore (repeatable)",
+        help="Regex pattern to ignore (repeatable, matched against names)",
     )
     scan_p.add_argument(
         "--out",
@@ -29,6 +33,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_p.add_argument("--check-invariants", action="store_true", default=False)
     scan_p.add_argument("-v", "--verbose", action="store_true", default=False)
+
+    # -- inventory --
+    inv_p = sub.add_parser("inventory", help="Output YAML inventory of the codebase")
+    inv_p.add_argument("root_dir", help="Root directory to scan")
+    inv_p.add_argument(
+        "--ignore",
+        action="append",
+        default=[],
+        help="Regex pattern to ignore (repeatable, matched against names)",
+    )
+    inv_p.add_argument(
+        "--out",
+        default=None,
+        help="Write inventory YAML to this file (default: stdout)",
+    )
 
     # -- execute --
     exec_p = sub.add_parser("execute", help="Execute a refactor plan")
@@ -50,9 +69,49 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_inventory(args: argparse.Namespace) -> int:
+    ignore = set(getattr(args, "ignore", []))
+    try:
+        inventory = walk_tree(args.root_dir, ignore)
+    except OSError as e:
+        print(f"Error scanning directory: {e}", file=sys.stderr)
+        return 2
+
+    files = sorted(inventory.values(), key=lambda e: e.path)
+    data = {
+        "version": "1.0",
+        "root": args.root_dir,
+        "delete_empty": True,
+        "created_at": timestamp_now(),
+        "moves": [
+            {
+                "source": entry.path,
+                "destination": entry.path,
+                "lang": entry.lang.name.lower(),
+                "size_bytes": entry.size_bytes,
+            }
+            for entry in files
+        ],
+    }
+    yaml_str = yaml.dump(data, default_flow_style=False, sort_keys=False)
+
+    out_dest = getattr(args, "out", None)
+    if out_dest:
+        with Path(out_dest).open("w", encoding="utf-8") as f:
+            f.write(yaml_str)
+        print(f"Inventory written to {out_dest}", file=sys.stderr)
+    else:
+        print(yaml_str)
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.command == "inventory":
+        return _run_inventory(args)
 
     plan_yaml = None
     if args.command == "execute":

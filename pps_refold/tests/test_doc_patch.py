@@ -1,8 +1,8 @@
-"""Tests for codebase_refactor.extern.doc_patch."""
+"""Tests for pps_refold.extern.doc_patch."""
 
 from __future__ import annotations
 
-from codebase_refactor.extern.doc_patch import patch_doc_paths
+from pps_refold.extern.doc_patch import patch_doc_paths
 
 
 def test_simple_rename():

@@ -1,4 +1,4 @@
-"""Tests for codebase_refactor.engine — state machine, scan & execute pipelines."""
+"""Tests for pps_refold.engine — state machine, scan & execute pipelines."""
 
 import json
 import os
@@ -6,8 +6,8 @@ import os
 import pytest
 import yaml
 
-from codebase_refactor.engine import Engine
-from codebase_refactor.models import (
+from pps_refold.engine import Engine
+from pps_refold.models import (
     EXECUTE_ONLY_PHASES,
     SCAN_ONLY_PHASES,
     Command,

@@ -1,8 +1,8 @@
-"""Tests for codebase_refactor.extern.preflight."""
+"""Tests for pps_refold.extern.preflight."""
 
 from __future__ import annotations
 
-from codebase_refactor.extern.preflight import preflight_moves, preflight_rewrites
+from pps_refold.extern.preflight import preflight_moves, preflight_rewrites
 
 # -- preflight_moves ----------------------------------------------------------
 

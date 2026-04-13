@@ -1,9 +1,9 @@
-"""Tests for codebase_refactor.cli — argument parsing and main() entry point."""
+"""Tests for pps_refold.cli — argument parsing and main() entry point."""
 
 import pytest
 import yaml
 
-from codebase_refactor.cli import build_parser, main
+from pps_refold.cli import build_parser, main
 
 # ---------------------------------------------------------------------------
 # Helpers
