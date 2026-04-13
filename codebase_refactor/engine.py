@@ -306,7 +306,7 @@ class Engine:
         self.state.phase = Phase.DONE
         self.state.log.append("Proposal written")
 
-    def _generate_moves_from_smells(self):
+    def _generate_moves_from_smells(self) -> list[MoveOp]:
         """Generate move suggestions from detected smells.
 
         Conservative v1: only suggest moves for deep-nested files.

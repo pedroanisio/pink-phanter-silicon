@@ -10,7 +10,7 @@ from ..models import FileEntry, Lang
 def build_reverse_graph(
     file_inventory: dict[str, FileEntry],
     extract_fn: Callable[[str, Lang], list[str]],
-    resolve_fn: Callable[[str, str, dict, Lang], str | None],
+    resolve_fn: Callable[[str, str, dict[str, str], Lang], str | None],
     file_index: dict[str, str],
     read_fn: Callable[[str], str],
 ) -> dict[str, list[str]]:
