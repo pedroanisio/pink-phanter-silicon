@@ -315,8 +315,10 @@ class Engine:
         from .extern.filesystem import detect_lang
         moves = []
         for smell in self.state.smells:
-            if smell.startswith("deep-nesting:"):
-                path = smell.split(":", 1)[1].strip()
+            if smell.startswith("Deep nesting:"):
+                # Format: "Deep nesting: path (N levels deep)"
+                raw = smell.split(":", 1)[1].strip()
+                path = raw.split(" (")[0]
                 parts = path.split("/")
                 if len(parts) > 3:
                     new_path = "/".join(parts[:2] + parts[-1:])
