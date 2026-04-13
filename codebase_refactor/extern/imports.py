@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import os
 import re
+from pathlib import PurePosixPath
 
 from ..models import Lang
 
@@ -43,11 +44,9 @@ def _extract_imports_python(source: str) -> list[str]:
     modules: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            for alias in node.names:
-                modules.append(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            if node.module is not None:
-                modules.append(node.module)
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module is not None:
+            modules.append(node.module)
     return modules
 
 
@@ -55,9 +54,7 @@ def _extract_imports_js(source: str) -> list[str]:
     """Use regex to extract JS/TS import paths."""
     results: list[str] = []
     for match in _JS_IMPORT_RE.finditer(source):
-        for group in match.groups():
-            if group is not None:
-                results.append(group)
+        results.extend(group for group in match.groups() if group is not None)
     return results
 
 
@@ -93,8 +90,8 @@ def _resolve_js(
     importer_path: str,
     file_index: dict[str, str],
 ) -> str | None:
-    if import_target.startswith("./") or import_target.startswith("../"):
-        base_dir = os.path.dirname(importer_path)
+    if import_target.startswith(("./", "../")):
+        base_dir = str(PurePosixPath(importer_path).parent)
         path = os.path.normpath(os.path.join(base_dir, import_target))
     else:
         path = import_target
@@ -135,11 +132,9 @@ def rewrite_imports(
 def _path_to_dotted(path: str) -> str:
     """Convert a file path like ``foo/bar.py`` to a dotted module ``foo.bar``."""
     # strip .py suffix
-    if path.endswith(".py"):
-        path = path[:-3]
+    path = path.removesuffix(".py")
     # strip trailing /__init__
-    if path.endswith("/__init__"):
-        path = path[: -len("/__init__")]
+    path = path.removesuffix("/__init__")
     return path.replace("/", ".")
 
 
@@ -203,7 +198,7 @@ def _rewrite_imports_js(
     current_file: str,
 ) -> str:
     """Regex-replace old relative imports with new relative imports in JS/TS."""
-    cur_dir = os.path.dirname(current_file)
+    cur_dir = str(PurePosixPath(current_file).parent)
 
     for old_path, new_path in renames.items():
         old_rel = os.path.relpath(old_path, cur_dir)

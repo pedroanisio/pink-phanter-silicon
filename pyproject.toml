@@ -21,3 +21,63 @@ omit = ["codebase_refactor/tests/*"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 90
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "ALL",
+]
+ignore = [
+    "D",        # pydocstyle — no docstring enforcement
+    "ANN",      # flake8-annotations — no type-annotation enforcement
+    "COM812",   # trailing comma — conflicts with ruff-format
+    "ISC001",   # single-line implicit string concat — conflicts with ruff-format
+    "T20",      # flake8-print — CLI tool uses print
+    "FBT",      # flake8-boolean-trap — dry_run bool params are by design
+    "S101",     # assert — used for invariant checks
+    "PLR0913",  # too many arguments — extern functions match the spec
+    "PLR0912",  # too many branches — engine rule table is inherently branchy
+    "PLR0915",  # too many statements — engine methods are long by design
+    "PLR2004",  # magic values — thresholds are clear in context
+    "EM",       # flake8-errmsg — inline error strings are fine here
+    "TRY003",   # long exception messages — descriptive errors are intentional
+    "TRY004",   # TypeError for isinstance — ValueError is correct for YAML validation
+    "ERA001",   # commented-out code
+    "TD",       # TODO format enforcement
+    "FIX002",   # TODO comments are acceptable
+    "TID252",   # relative imports from parent — standard package pattern
+    "C901",     # complex functions — engine methods are inherently complex
+    "TC",       # type-checking imports — adds complexity for marginal benefit
+    "PLW2901",  # loop variable overwritten — intentional in rewrite logic
+]
+
+[tool.ruff.lint.per-file-ignores]
+"codebase_refactor/tests/*" = [
+    "S",        # security warnings in tests
+    "PLR2004",  # magic values in tests
+    "SLF001",   # private member access in tests
+    "INP001",   # no __init__.py needed for test namespace
+    "E501",     # line length in tests — readability over wrapping
+    "ARG001",   # unused args in stub/mock functions
+    "B905",     # zip strict — not needed in test assertions
+    "PIE810",   # endswith tuple — readability in tests
+    "PTH",      # os.path in test assertions is fine
+    "F841",     # unused variables in tests — sometimes intentional for side effects
+]
+"codebase_refactor/engine.py" = [
+    "PTH",      # os.path used extensively — pathlib conversion would be disruptive
+    "S112",     # try-except-continue is intentional for resilient file processing
+    "BLE001",   # broad except in backup/rewrite loops for resilience
+]
+"codebase_refactor/extern/preflight.py" = [
+    "PTH",      # os.path matches the function signatures from the spec
+]
+"codebase_refactor/extern/imports.py" = [
+    "PTH",      # os.path.relpath/normpath have no clean pathlib equivalent
+]
+
+[tool.ruff.format]
+quote-style = "double"

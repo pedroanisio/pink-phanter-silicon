@@ -7,7 +7,6 @@ import re
 
 from codebase_refactor.extern.reporting import serialize_report, timestamp_now
 
-
 # -- serialize_report ----------------------------------------------------------
 
 

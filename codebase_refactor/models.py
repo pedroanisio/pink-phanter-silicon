@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
-
 
 # -- enums -----------------------------------------------------------------
+
 
 class Lang(Enum):
     PYTHON = auto()
@@ -40,24 +39,40 @@ class Phase(Enum):
 
 # -- phase sets for isolation invariants -----------------------------------
 
-SCAN_ONLY_PHASES = frozenset({
-    Phase.SCANNING, Phase.BUILDING_GRAPH,
-    Phase.DETECTING_SMELLS, Phase.PROPOSING,
-})
+SCAN_ONLY_PHASES = frozenset(
+    {
+        Phase.SCANNING,
+        Phase.BUILDING_GRAPH,
+        Phase.DETECTING_SMELLS,
+        Phase.PROPOSING,
+    }
+)
 
-EXECUTE_ONLY_PHASES = frozenset({
-    Phase.VALIDATING, Phase.BACKING_UP, Phase.CREATING_DIRS,
-    Phase.MOVING, Phase.REWRITING_IMPORTS, Phase.PATCHING_DOCS,
-    Phase.CLEANING_DIRS, Phase.REPORTING,
-})
+EXECUTE_ONLY_PHASES = frozenset(
+    {
+        Phase.VALIDATING,
+        Phase.BACKING_UP,
+        Phase.CREATING_DIRS,
+        Phase.MOVING,
+        Phase.REWRITING_IMPORTS,
+        Phase.PATCHING_DOCS,
+        Phase.CLEANING_DIRS,
+        Phase.REPORTING,
+    }
+)
 
-MUTATION_PHASES = frozenset({
-    Phase.MOVING, Phase.REWRITING_IMPORTS,
-    Phase.PATCHING_DOCS, Phase.CLEANING_DIRS,
-})
+MUTATION_PHASES = frozenset(
+    {
+        Phase.MOVING,
+        Phase.REWRITING_IMPORTS,
+        Phase.PATCHING_DOCS,
+        Phase.CLEANING_DIRS,
+    }
+)
 
 
 # -- records ---------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class FileEntry:
@@ -85,11 +100,12 @@ class RefactorPlan:
 
 # -- engine IO -------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class EngineInput:
     command: Command
     root_dir: str
-    plan_yaml: Optional[str] = None
+    plan_yaml: str | None = None
     dry_run: bool = False
     extra_ignore: list[str] = field(default_factory=list)
     backup_dir_name: str = ".refactor-backup"
@@ -105,7 +121,7 @@ class EngineState:
     smells: list[str] = field(default_factory=list)
 
     # plan
-    plan: Optional[RefactorPlan] = None
+    plan: RefactorPlan | None = None
     move_map: dict[str, str] = field(default_factory=dict)
     has_cycles: bool = False
     delete_empty: bool = False
@@ -121,12 +137,12 @@ class EngineState:
 
     # shared
     log: list[str] = field(default_factory=list)
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
 class EngineOutput:
-    plan_yaml: Optional[str] = None
-    report_json: Optional[str] = None
+    plan_yaml: str | None = None
+    report_json: str | None = None
     log: list[str] = field(default_factory=list)
-    error_message: Optional[str] = None
+    error_message: str | None = None

@@ -1,8 +1,9 @@
 import argparse
 import sys
+from pathlib import Path
 
-from .models import Command, EngineInput
 from .engine import Engine
+from .models import Command, EngineInput
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -16,11 +17,14 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p = sub.add_parser("scan", help="Scan a directory and propose a refactor plan")
     scan_p.add_argument("root_dir", help="Root directory to scan")
     scan_p.add_argument(
-        "--ignore", action="append", default=[],
+        "--ignore",
+        action="append",
+        default=[],
         help="Glob pattern to ignore (repeatable)",
     )
     scan_p.add_argument(
-        "--out", default=None,
+        "--out",
+        default=None,
         help="Write plan YAML to this file (default: stdout)",
     )
     scan_p.add_argument("--check-invariants", action="store_true", default=False)
@@ -30,12 +34,14 @@ def build_parser() -> argparse.ArgumentParser:
     exec_p = sub.add_parser("execute", help="Execute a refactor plan")
     exec_p.add_argument("root_dir", help="Root directory to refactor")
     exec_p.add_argument(
-        "--plan", required=True,
+        "--plan",
+        required=True,
         help="Path to plan YAML file",
     )
     exec_p.add_argument("--dry-run", action="store_true", default=False)
     exec_p.add_argument(
-        "--backup-dir", default=".refactor-backup",
+        "--backup-dir",
+        default=".refactor-backup",
         help="Name of backup directory (default: .refactor-backup)",
     )
     exec_p.add_argument("--check-invariants", action="store_true", default=False)
@@ -51,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     plan_yaml = None
     if args.command == "execute":
         try:
-            with open(args.plan, encoding="utf-8") as f:
+            with Path(args.plan).open(encoding="utf-8") as f:
                 plan_yaml = f.read()
         except OSError as e:
             print(f"Error reading plan file: {e}", file=sys.stderr)
@@ -69,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         engine = Engine(inp, check_invariants=args.check_invariants)
         output = engine.run()
-    except Exception as e:
+    except (OSError, RuntimeError, ValueError) as e:
         print(f"Internal error: {e}", file=sys.stderr)
         return 2
 
@@ -84,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "scan" and output.plan_yaml:
         out_dest = getattr(args, "out", None)
         if out_dest:
-            with open(out_dest, "w", encoding="utf-8") as f:
+            with Path(out_dest).open("w", encoding="utf-8") as f:
                 f.write(output.plan_yaml)
             print(f"Plan written to {out_dest}", file=sys.stderr)
         else:

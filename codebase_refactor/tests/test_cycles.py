@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from codebase_refactor.models import MoveOp, Lang
 from codebase_refactor.extern.cycles import detect_move_cycles
-
+from codebase_refactor.models import Lang, MoveOp
 
 # -- helper -------------------------------------------------------------------
 

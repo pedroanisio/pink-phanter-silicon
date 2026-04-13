@@ -2,20 +2,20 @@
 
 import pytest
 
-from codebase_refactor.models import Lang, MoveOp, RefactorPlan
 from codebase_refactor.extern.plan import (
-    serialize_yaml,
-    deserialize_yaml,
-    validate_plan,
-    plan_to_move_map,
     count_plan_moves,
+    deserialize_yaml,
     plan_delete_empty,
+    plan_to_move_map,
+    serialize_yaml,
+    validate_plan,
 )
-
+from codebase_refactor.models import Lang, MoveOp, RefactorPlan
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_plan(
     moves=None,
@@ -101,11 +101,7 @@ def test_deserialize_invalid_lang():
 
 def test_deserialize_moves_not_list():
     yaml_text = (
-        "version: 1\n"
-        "root: /tmp\n"
-        "delete_empty: true\n"
-        "created_at: '2026-01-01'\n"
-        "moves: string\n"
+        "version: 1\nroot: /tmp\ndelete_empty: true\ncreated_at: '2026-01-01'\nmoves: string\n"
     )
     with pytest.raises(ValueError, match="must be a list"):
         deserialize_yaml(yaml_text)
@@ -113,12 +109,7 @@ def test_deserialize_moves_not_list():
 
 def test_deserialize_move_not_mapping():
     yaml_text = (
-        "version: 1\n"
-        "root: /tmp\n"
-        "delete_empty: true\n"
-        "created_at: '2026-01-01'\n"
-        "moves:\n"
-        "  - 42\n"
+        "version: 1\nroot: /tmp\ndelete_empty: true\ncreated_at: '2026-01-01'\nmoves:\n  - 42\n"
     )
     with pytest.raises(ValueError, match="not a mapping"):
         deserialize_yaml(yaml_text)

@@ -1,28 +1,50 @@
 from __future__ import annotations
 
 import os
+import shutil
 import uuid
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from .models import (
-    Command, EngineInput, EngineOutput, EngineState, Lang, Phase,
-    RefactorPlan, MUTATION_PHASES, SCAN_ONLY_PHASES, EXECUTE_ONLY_PHASES,
-)
-from .extern.filesystem import (
-    copy_file, dir_exists, dir_is_empty, mkdir, move_file,
-    parent_dirs, read_file, rmdir, walk_tree, write_file,
-)
-from .extern.imports import extract_imports, resolve_import, rewrite_imports
-from .extern.doc_patch import patch_doc_paths
-from .extern.plan import (
-    count_plan_moves, deserialize_yaml, plan_delete_empty,
-    plan_to_move_map, serialize_yaml, validate_plan,
-)
 from .extern.cycles import detect_move_cycles
-from .extern.preflight import preflight_moves, preflight_rewrites
+from .extern.doc_patch import patch_doc_paths
+from .extern.filesystem import (
+    copy_file,
+    detect_lang,
+    dir_exists,
+    dir_is_empty,
+    mkdir,
+    move_file,
+    parent_dirs,
+    read_file,
+    rmdir,
+    walk_tree,
+    write_file,
+)
 from .extern.graph import build_reverse_graph, detect_smells
+from .extern.imports import extract_imports, resolve_import, rewrite_imports
+from .extern.plan import (
+    count_plan_moves,
+    deserialize_yaml,
+    plan_delete_empty,
+    plan_to_move_map,
+    serialize_yaml,
+    validate_plan,
+)
+from .extern.preflight import preflight_moves, preflight_rewrites
 from .extern.reporting import serialize_report, timestamp_now
-
+from .models import (
+    EXECUTE_ONLY_PHASES,
+    MUTATION_PHASES,
+    SCAN_ONLY_PHASES,
+    Command,
+    EngineInput,
+    EngineOutput,
+    EngineState,
+    Lang,
+    MoveOp,
+    Phase,
+    RefactorPlan,
+)
 
 RuleTuple = tuple[str, Callable[[], bool], Callable[[], None]]
 
@@ -75,18 +97,30 @@ class Engine:
             # -- priority 40: create dirs --
             ("create_dirs", self._guard_creating_dirs, self._action_create_dirs),
             # -- priority 49: move preflight --
-            ("move_preflight_fail", self._guard_move_preflight_fail, self._action_move_preflight_fail),
+            (
+                "move_preflight_fail",
+                self._guard_move_preflight_fail,
+                self._action_move_preflight_fail,
+            ),
             # -- priority 50: move files --
             ("move_files_direct", self._guard_move_direct, self._action_move_direct),
             ("move_files_staged", self._guard_move_staged, self._action_move_staged),
             ("move_files_dry", self._guard_move_dry, self._action_move_dry),
             # -- priority 59: rewrite preflight --
-            ("rewrite_preflight_fail", self._guard_rewrite_preflight_fail, self._action_rewrite_preflight_fail),
+            (
+                "rewrite_preflight_fail",
+                self._guard_rewrite_preflight_fail,
+                self._action_rewrite_preflight_fail,
+            ),
             # -- priority 60: rewrite imports --
             ("rewrite_imports", self._guard_rewriting_imports, self._action_rewrite_imports),
             # -- priority 70: patch docs --
             ("patch_docs", self._guard_patch_docs, self._action_patch_docs),
-            ("patch_docs_skip_clean", self._guard_patch_docs_skip_clean, self._action_patch_docs_skip_clean),
+            (
+                "patch_docs_skip_clean",
+                self._guard_patch_docs_skip_clean,
+                self._action_patch_docs_skip_clean,
+            ),
             # -- priority 80: clean dirs --
             ("clean_dirs", self._guard_cleaning_dirs, self._action_clean_dirs),
             # -- priority 90: report --
@@ -149,28 +183,16 @@ class Engine:
     # -- guards: execute pipeline ------------------------------------------
 
     def _guard_validate_pass(self) -> bool:
-        return (
-            self.state.phase == Phase.VALIDATING
-            and len(self.state.validation_errors) == 0
-        )
+        return self.state.phase == Phase.VALIDATING and len(self.state.validation_errors) == 0
 
     def _guard_validate_fail(self) -> bool:
-        return (
-            self.state.phase == Phase.VALIDATING
-            and len(self.state.validation_errors) > 0
-        )
+        return self.state.phase == Phase.VALIDATING and len(self.state.validation_errors) > 0
 
     def _guard_backup_live(self) -> bool:
-        return (
-            self.state.phase == Phase.BACKING_UP
-            and not self.inp.dry_run
-        )
+        return self.state.phase == Phase.BACKING_UP and not self.inp.dry_run
 
     def _guard_backup_dry_run(self) -> bool:
-        return (
-            self.state.phase == Phase.BACKING_UP
-            and self.inp.dry_run
-        )
+        return self.state.phase == Phase.BACKING_UP and self.inp.dry_run
 
     def _guard_creating_dirs(self) -> bool:
         return self.state.phase == Phase.CREATING_DIRS
@@ -184,23 +206,14 @@ class Engine:
 
     def _guard_move_direct(self) -> bool:
         return (
-            self.state.phase == Phase.MOVING
-            and not self.inp.dry_run
-            and not self.state.has_cycles
+            self.state.phase == Phase.MOVING and not self.inp.dry_run and not self.state.has_cycles
         )
 
     def _guard_move_staged(self) -> bool:
-        return (
-            self.state.phase == Phase.MOVING
-            and not self.inp.dry_run
-            and self.state.has_cycles
-        )
+        return self.state.phase == Phase.MOVING and not self.inp.dry_run and self.state.has_cycles
 
     def _guard_move_dry(self) -> bool:
-        return (
-            self.state.phase == Phase.MOVING
-            and self.inp.dry_run
-        )
+        return self.state.phase == Phase.MOVING and self.inp.dry_run
 
     def _guard_rewrite_preflight_fail(self) -> bool:
         return (
@@ -213,16 +226,10 @@ class Engine:
         return self.state.phase == Phase.REWRITING_IMPORTS
 
     def _guard_patch_docs(self) -> bool:
-        return (
-            self.state.phase == Phase.PATCHING_DOCS
-            and self.state.delete_empty
-        )
+        return self.state.phase == Phase.PATCHING_DOCS and self.state.delete_empty
 
     def _guard_patch_docs_skip_clean(self) -> bool:
-        return (
-            self.state.phase == Phase.PATCHING_DOCS
-            and not self.state.delete_empty
-        )
+        return self.state.phase == Phase.PATCHING_DOCS and not self.state.delete_empty
 
     def _guard_cleaning_dirs(self) -> bool:
         return self.state.phase == Phase.CLEANING_DIRS
@@ -238,9 +245,7 @@ class Engine:
 
     def _action_scan_bad_root(self) -> None:
         self.state.phase = Phase.FAILED
-        self.state.error_message = (
-            f"Project root directory does not exist: {self.inp.root_dir}"
-        )
+        self.state.error_message = f"Project root directory does not exist: {self.inp.root_dir}"
 
     def _action_execute_no_plan(self) -> None:
         self.state.phase = Phase.FAILED
@@ -248,9 +253,7 @@ class Engine:
 
     def _action_execute_bad_root(self) -> None:
         self.state.phase = Phase.FAILED
-        self.state.error_message = (
-            f"Project root directory does not exist: {self.inp.root_dir}"
-        )
+        self.state.error_message = f"Project root directory does not exist: {self.inp.root_dir}"
 
     def _action_start_execute(self) -> None:
         assert self.inp.plan_yaml is not None
@@ -266,9 +269,7 @@ class Engine:
         ignore = set(self.inp.extra_ignore)
         self.state.file_inventory = walk_tree(self.inp.root_dir, ignore)
         self.state.phase = Phase.BUILDING_GRAPH
-        self.state.log.append(
-            f"Found {len(self.state.file_inventory)} files"
-        )
+        self.state.log.append(f"Found {len(self.state.file_inventory)} files")
 
     def _action_build_graph(self) -> None:
         file_index = {p: p for p in self.state.file_inventory}
@@ -292,7 +293,6 @@ class Engine:
         self.state.log.append(f"Detected {len(self.state.smells)} smells")
 
     def _action_propose_plan(self) -> None:
-        from .extern.plan import serialize_yaml
         moves = self._generate_moves_from_smells()
         plan = RefactorPlan(
             version="1.0",
@@ -311,8 +311,6 @@ class Engine:
 
         Conservative v1: only suggest moves for deep-nested files.
         """
-        from .models import MoveOp
-        from .extern.filesystem import detect_lang
         moves = []
         for smell in self.state.smells:
             if smell.startswith("Deep nesting:"):
@@ -339,9 +337,7 @@ class Engine:
     def _action_validate_fail(self) -> None:
         self.state.phase = Phase.FAILED
         self.state.error_message = "Plan validation failed"
-        self.state.log.append(
-            f"Validation failed: {self.state.validation_errors}"
-        )
+        self.state.log.append(f"Validation failed: {self.state.validation_errors}")
 
     def _action_backup_live(self) -> None:
         root = self.inp.root_dir
@@ -354,7 +350,7 @@ class Engine:
                     if old_path in source:
                         files_to_backup.add(fpath)
                         break
-            except Exception:
+            except (OSError, ValueError):
                 continue
         for fpath in files_to_backup:
             src = os.path.join(root, fpath)
@@ -363,9 +359,7 @@ class Engine:
             copy_file(src, dst, dry_run=False)
         self.state.backup_complete = True
         self.state.phase = Phase.CREATING_DIRS
-        self.state.log.append(
-            f"Backup complete: {len(files_to_backup)} files"
-        )
+        self.state.log.append(f"Backup complete: {len(files_to_backup)} files")
 
     def _action_backup_dry_run(self) -> None:
         self.state.backup_complete = False
@@ -390,9 +384,7 @@ class Engine:
 
     def _action_move_preflight_fail(self) -> None:
         self.state.phase = Phase.FAILED
-        self.state.error_message = (
-            "Move pre-flight failed: source missing or destination conflict"
-        )
+        self.state.error_message = "Move pre-flight failed: source missing or destination conflict"
 
     def _action_move_direct(self) -> None:
         root = self.inp.root_dir
@@ -422,11 +414,7 @@ class Engine:
             if move_file(stage_path, dst_path, dry_run=False):
                 count += 1
         # clean staging
-        try:
-            import shutil
-            shutil.rmtree(staging, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(staging, ignore_errors=True)
         self.state.files_moved = count
         self.state.phase = Phase.REWRITING_IMPORTS
         self.state.log.append(f"Moved {count} files (staged)")
@@ -434,15 +422,11 @@ class Engine:
     def _action_move_dry(self) -> None:
         self.state.files_moved = len(self.state.move_map)
         self.state.phase = Phase.REWRITING_IMPORTS
-        self.state.log.append(
-            f"[DRY RUN] Simulating {len(self.state.move_map)} file moves"
-        )
+        self.state.log.append(f"[DRY RUN] Simulating {len(self.state.move_map)} file moves")
 
     def _action_rewrite_preflight_fail(self) -> None:
         self.state.phase = Phase.FAILED
-        self.state.error_message = (
-            "Import rewrite pre-flight failed: files inaccessible"
-        )
+        self.state.error_message = "Import rewrite pre-flight failed: files inaccessible"
 
     def _action_rewrite_imports(self) -> None:
         root = self.inp.root_dir
@@ -454,12 +438,15 @@ class Engine:
                 try:
                     source = read_file(full_path)
                     rewritten = rewrite_imports(
-                        source, renames, entry.lang, fpath,
+                        source,
+                        renames,
+                        entry.lang,
+                        fpath,
                     )
                     if rewritten != source:
                         write_file(full_path, rewritten, dry_run=self.inp.dry_run)
                         count += 1
-                except Exception:
+                except (OSError, ValueError):
                     continue
         self.state.imports_patched = count
         self.state.phase = Phase.PATCHING_DOCS
@@ -486,7 +473,7 @@ class Engine:
                     if patched != content:
                         write_file(full_path, patched, dry_run=self.inp.dry_run)
                         count += 1
-                except Exception:
+                except (OSError, ValueError):
                     continue
         self.state.docs_patched = count
         self.state.log.append(f"Patched {count} doc files")
@@ -501,10 +488,9 @@ class Engine:
         for d in sorted(source_parents, key=len, reverse=True):
             full_path = os.path.join(root, d)
             try:
-                if dir_is_empty(full_path):
-                    if rmdir(full_path, dry_run=self.inp.dry_run):
-                        count += 1
-            except Exception:
+                if dir_is_empty(full_path) and rmdir(full_path, dry_run=self.inp.dry_run):
+                    count += 1
+            except (OSError, ValueError):
                 continue
         self.state.dirs_cleaned = count
         self.state.phase = Phase.REPORTING
@@ -553,8 +539,7 @@ class Engine:
         # 3. moves_bounded
         if s.plan is not None:
             assert s.files_moved <= count_plan_moves(s.plan), (
-                f"Invariant moves_bounded violated: "
-                f"{s.files_moved} > {count_plan_moves(s.plan)}"
+                f"Invariant moves_bounded violated: {s.files_moved} > {count_plan_moves(s.plan)}"
             )
 
         # 4. scan_isolation
@@ -571,12 +556,8 @@ class Engine:
 
         # 6. done_has_scan_output
         if s.phase == Phase.DONE and inp.command == Command.SCAN:
-            assert self.output.plan_yaml is not None, (
-                "Invariant done_has_scan_output violated"
-            )
+            assert self.output.plan_yaml is not None, "Invariant done_has_scan_output violated"
 
         # 7. done_has_execute_output
         if s.phase == Phase.DONE and inp.command == Command.EXECUTE:
-            assert self.output.report_json is not None, (
-                "Invariant done_has_execute_output violated"
-            )
+            assert self.output.report_json is not None, "Invariant done_has_execute_output violated"

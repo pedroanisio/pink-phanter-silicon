@@ -22,6 +22,7 @@ def preflight_moves(move_map: dict[str, str], root: str) -> bool:
 
 
 def preflight_rewrites(move_map: dict[str, str], root: str) -> bool:
+    _ = move_map
     for dirpath, _dirnames, filenames in os.walk(root):
         for fname in filenames:
             path = os.path.join(dirpath, fname)

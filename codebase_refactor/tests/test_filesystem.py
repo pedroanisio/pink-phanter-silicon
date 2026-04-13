@@ -5,25 +5,22 @@ from __future__ import annotations
 import hashlib
 import re
 
-import pytest
-
 from codebase_refactor.extern.filesystem import (
+    copy_file,
     detect_lang,
     dir_exists,
+    dir_is_empty,
     file_exists,
     hash_file,
-    dir_is_empty,
+    mkdir,
+    move_file,
     parent_dirs,
     read_file,
+    rmdir,
     walk_tree,
     write_file,
-    move_file,
-    mkdir,
-    rmdir,
-    copy_file,
 )
 from codebase_refactor.models import Lang
-
 
 # -- detect_lang ---------------------------------------------------------------
 

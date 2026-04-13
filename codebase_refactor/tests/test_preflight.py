@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
-
 from codebase_refactor.extern.preflight import preflight_moves, preflight_rewrites
-
 
 # -- preflight_moves ----------------------------------------------------------
 

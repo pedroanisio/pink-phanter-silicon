@@ -1,16 +1,14 @@
 """Tests for codebase_refactor.cli — argument parsing and main() entry point."""
 
-import os
 import pytest
-
 import yaml
 
-from codebase_refactor.cli import main, build_parser
-
+from codebase_refactor.cli import build_parser, main
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_project(tmp_path):
     """Create a small project with a couple of .py files."""
@@ -28,9 +26,7 @@ def _make_plan_file(tmp_path, root):
         "root": root,
         "delete_empty": True,
         "created_at": "2024-01-01T00:00:00",
-        "moves": [
-            {"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}
-        ],
+        "moves": [{"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}],
     }
     plan_path = tmp_path / "plan.yaml"
     plan_path.write_text(yaml.dump(plan_data))
@@ -43,7 +39,6 @@ def _make_plan_file(tmp_path, root):
 
 
 class TestBuildParser:
-
     def test_build_parser_scan(self):
         """Parse 'scan /some/dir' -> args.command='scan', args.root_dir='/some/dir'."""
         parser = build_parser()
@@ -55,9 +50,7 @@ class TestBuildParser:
     def test_build_parser_scan_with_ignore(self):
         """Parse scan with --ignore flags -> args.ignore has 2 items."""
         parser = build_parser()
-        args = parser.parse_args([
-            "scan", "/dir", "--ignore", "*.pyc", "--ignore", "__pycache__"
-        ])
+        args = parser.parse_args(["scan", "/dir", "--ignore", "*.pyc", "--ignore", "__pycache__"])
 
         assert args.command == "scan"
         assert args.root_dir == "/dir"
@@ -77,9 +70,7 @@ class TestBuildParser:
     def test_build_parser_execute_dry_run(self):
         """Parse with --dry-run -> args.dry_run=True."""
         parser = build_parser()
-        args = parser.parse_args([
-            "execute", "/dir", "--plan", "plan.yaml", "--dry-run"
-        ])
+        args = parser.parse_args(["execute", "/dir", "--plan", "plan.yaml", "--dry-run"])
 
         assert args.command == "execute"
         assert args.dry_run is True
@@ -97,7 +88,6 @@ class TestBuildParser:
 
 
 class TestMain:
-
     def test_main_scan_bad_root(self):
         """main(['scan', '/nonexistent/path']) -> returns 1."""
         result = main(["scan", "/nonexistent/path"])
@@ -133,4 +123,6 @@ class TestMain:
         # Verbose mode should print log lines to stderr
         assert len(captured.err) > 0
         # Expect some scan-related log output
-        assert "Scanning" in captured.err or "Found" in captured.err or "built" in captured.err.lower()
+        assert (
+            "Scanning" in captured.err or "Found" in captured.err or "built" in captured.err.lower()
+        )

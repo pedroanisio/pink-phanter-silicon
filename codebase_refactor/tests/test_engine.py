@@ -2,21 +2,23 @@
 
 import json
 import os
-import pytest
-from unittest.mock import patch, MagicMock
 
+import pytest
 import yaml
 
-from codebase_refactor.models import (
-    Command, EngineInput, EngineState, Phase, Lang, MoveOp, RefactorPlan,
-    SCAN_ONLY_PHASES, EXECUTE_ONLY_PHASES,
-)
 from codebase_refactor.engine import Engine
-
+from codebase_refactor.models import (
+    EXECUTE_ONLY_PHASES,
+    SCAN_ONLY_PHASES,
+    Command,
+    EngineInput,
+    Phase,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_project(tmp_path):
     """Create a small project: src/a.py imports src/b.py"""
@@ -28,40 +30,42 @@ def _make_project(tmp_path):
 
 
 def _make_plan_yaml(root):
-    return yaml.dump({
-        "version": "1.0",
-        "root": root,
-        "delete_empty": True,
-        "created_at": "2024-01-01T00:00:00",
-        "moves": [
-            {"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}
-        ],
-    })
+    return yaml.dump(
+        {
+            "version": "1.0",
+            "root": root,
+            "delete_empty": True,
+            "created_at": "2024-01-01T00:00:00",
+            "moves": [{"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}],
+        }
+    )
 
 
 def _make_plan_yaml_no_delete(root):
-    return yaml.dump({
-        "version": "1.0",
-        "root": root,
-        "delete_empty": False,
-        "created_at": "2024-01-01T00:00:00",
-        "moves": [
-            {"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}
-        ],
-    })
+    return yaml.dump(
+        {
+            "version": "1.0",
+            "root": root,
+            "delete_empty": False,
+            "created_at": "2024-01-01T00:00:00",
+            "moves": [{"source": "src/b.py", "destination": "lib/b.py", "lang": "python"}],
+        }
+    )
 
 
 def _make_swap_plan_yaml(root):
-    return yaml.dump({
-        "version": "1.0",
-        "root": root,
-        "delete_empty": True,
-        "created_at": "2024-01-01T00:00:00",
-        "moves": [
-            {"source": "src/a.py", "destination": "src/b.py", "lang": "python"},
-            {"source": "src/b.py", "destination": "src/a.py", "lang": "python"},
-        ],
-    })
+    return yaml.dump(
+        {
+            "version": "1.0",
+            "root": root,
+            "delete_empty": True,
+            "created_at": "2024-01-01T00:00:00",
+            "moves": [
+                {"source": "src/a.py", "destination": "src/b.py", "lang": "python"},
+                {"source": "src/b.py", "destination": "src/a.py", "lang": "python"},
+            ],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +74,6 @@ def _make_swap_plan_yaml(root):
 
 
 class TestScanPipeline:
-
     def test_scan_bad_root(self):
         """SCAN with nonexistent root_dir -> FAILED, error mentions 'does not exist'."""
         inp = EngineInput(
@@ -106,7 +109,6 @@ class TestScanPipeline:
 
 
 class TestExecutePipeline:
-
     def test_execute_no_plan(self):
         """EXECUTE with plan_yaml=None -> FAILED, 'No plan file provided'."""
         inp = EngineInput(
@@ -127,7 +129,7 @@ class TestExecutePipeline:
             command=Command.EXECUTE,
             root_dir="/nonexistent/path/that/does/not/exist",
             plan_yaml="version: '1.0'\nroot: /fake\ndelete_empty: true\n"
-                      "created_at: '2024-01-01'\nmoves: []\n",
+            "created_at: '2024-01-01'\nmoves: []\n",
         )
         engine = Engine(inp)
         output = engine.run()
@@ -215,7 +217,6 @@ class TestExecutePipeline:
 
 
 class TestInvariants:
-
     def test_invariant_backup_before_mutation(self, tmp_path):
         """Run with check_invariants=True, verify no assertion error on normal execution."""
         root = _make_project(tmp_path)
@@ -249,7 +250,7 @@ class TestInvariants:
             command=Command.EXECUTE,
             root_dir="/nonexistent/xyz",
             plan_yaml="version: '1.0'\nroot: /fake\ndelete_empty: true\n"
-                      "created_at: '2024-01-01'\nmoves: []\n",
+            "created_at: '2024-01-01'\nmoves: []\n",
         )
         out3 = Engine(inp3).run()
         assert out3.error_message is not None
@@ -267,9 +268,7 @@ class TestInvariants:
         visited_phases.append(engine.state.phase)
 
         for phase in visited_phases:
-            assert phase not in EXECUTE_ONLY_PHASES, (
-                f"Scan visited execute-only phase: {phase}"
-            )
+            assert phase not in EXECUTE_ONLY_PHASES, f"Scan visited execute-only phase: {phase}"
 
     def test_invariant_execute_isolation(self, tmp_path):
         """Run EXECUTE with valid plan, collect phases. None should be in SCAN_ONLY_PHASES."""
@@ -291,9 +290,7 @@ class TestInvariants:
         visited_phases.append(engine.state.phase)
 
         for phase in visited_phases:
-            assert phase not in SCAN_ONLY_PHASES, (
-                f"Execute visited scan-only phase: {phase}"
-            )
+            assert phase not in SCAN_ONLY_PHASES, f"Execute visited scan-only phase: {phase}"
 
     def test_invariant_done_has_scan_output(self, tmp_path):
         """Run SCAN to DONE, assert plan_yaml not None."""
@@ -338,7 +335,6 @@ class TestInvariants:
 
 
 class TestMoveStrategies:
-
     def test_execute_with_cycles(self, tmp_path):
         """A->B, B->A swap plan. Staged move should swap both files correctly."""
         root = _make_project(tmp_path)

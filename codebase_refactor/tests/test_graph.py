@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from codebase_refactor.models import FileEntry, Lang
 from codebase_refactor.extern.graph import build_reverse_graph, detect_smells
-
+from codebase_refactor.models import FileEntry, Lang
 
 # -- helpers ------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -26,6 +26,7 @@ _EXT_TO_LANG: dict[str, Lang] = {
 # Serialization
 # ---------------------------------------------------------------------------
 
+
 def serialize_yaml(plan: RefactorPlan) -> str:
     """Dump a *RefactorPlan* to a YAML string."""
     data: dict[str, Any] = {
@@ -48,6 +49,7 @@ def serialize_yaml(plan: RefactorPlan) -> str:
 # ---------------------------------------------------------------------------
 # Deserialization
 # ---------------------------------------------------------------------------
+
 
 def deserialize_yaml(yaml_text: str) -> RefactorPlan:
     """Parse a YAML string and hydrate a *RefactorPlan*.
@@ -80,17 +82,13 @@ def deserialize_yaml(yaml_text: str) -> RefactorPlan:
         move_keys = {"source", "destination", "lang"}
         move_missing = move_keys - entry.keys()
         if move_missing:
-            raise ValueError(
-                f"Move entry {idx} missing keys: {', '.join(sorted(move_missing))}"
-            )
+            raise ValueError(f"Move entry {idx} missing keys: {', '.join(sorted(move_missing))}")
 
         lang_str = str(entry["lang"]).upper()
         try:
             lang = Lang[lang_str]
         except KeyError:
-            raise ValueError(
-                f"Move entry {idx} has invalid lang '{entry['lang']}'"
-            ) from None
+            raise ValueError(f"Move entry {idx} has invalid lang '{entry['lang']}'") from None
 
         moves.append(
             MoveOp(
@@ -113,6 +111,7 @@ def deserialize_yaml(yaml_text: str) -> RefactorPlan:
 # Validation
 # ---------------------------------------------------------------------------
 
+
 def validate_plan(plan: RefactorPlan, root: str) -> list[str]:
     """Return a list of human-readable error strings (empty on success).
 
@@ -128,33 +127,27 @@ def validate_plan(plan: RefactorPlan, root: str) -> list[str]:
 
     # 1. Source existence
     for move in plan.moves:
-        full_path = os.path.join(root, move.source)
-        if not os.path.isfile(full_path):
+        full_path = Path(root) / move.source
+        if not full_path.is_file():
             errors.append(f"Source file does not exist: {move.source}")
 
     # 2. Duplicate destinations
     seen_destinations: dict[str, int] = {}
     for move in plan.moves:
-        seen_destinations[move.destination] = (
-            seen_destinations.get(move.destination, 0) + 1
-        )
+        seen_destinations[move.destination] = seen_destinations.get(move.destination, 0) + 1
     for dest, count in seen_destinations.items():
         if count > 1:
-            errors.append(
-                f"Duplicate destination ({count} moves): {dest}"
-            )
+            errors.append(f"Duplicate destination ({count} moves): {dest}")
 
     # 3. Destination collision with existing file not in sources
     for move in plan.moves:
-        dest_path = os.path.join(root, move.destination)
-        if os.path.isfile(dest_path) and move.destination not in sources:
-            errors.append(
-                f"Destination collides with existing file: {move.destination}"
-            )
+        dest_path = Path(root) / move.destination
+        if dest_path.is_file() and move.destination not in sources:
+            errors.append(f"Destination collides with existing file: {move.destination}")
 
     # 4. Language / extension consistency
     for move in plan.moves:
-        _, ext = os.path.splitext(move.source)
+        ext = Path(move.source).suffix
         expected_lang = _EXT_TO_LANG.get(ext)
         if expected_lang is not None and move.lang != expected_lang:
             errors.append(
@@ -169,6 +162,7 @@ def validate_plan(plan: RefactorPlan, root: str) -> list[str]:
 # ---------------------------------------------------------------------------
 # Convenience helpers
 # ---------------------------------------------------------------------------
+
 
 def plan_to_move_map(plan: RefactorPlan) -> dict[str, str]:
     """Return ``{source: destination}`` for every move in the plan."""

@@ -5,20 +5,19 @@ from __future__ import annotations
 import pytest
 
 from codebase_refactor.models import (
-    Lang,
-    Command,
-    Phase,
-    FileEntry,
-    MoveOp,
-    RefactorPlan,
-    EngineInput,
-    EngineState,
-    EngineOutput,
-    SCAN_ONLY_PHASES,
     EXECUTE_ONLY_PHASES,
     MUTATION_PHASES,
+    SCAN_ONLY_PHASES,
+    Command,
+    EngineInput,
+    EngineOutput,
+    EngineState,
+    FileEntry,
+    Lang,
+    MoveOp,
+    Phase,
+    RefactorPlan,
 )
-
 
 # -- enum membership ----------------------------------------------------------
 

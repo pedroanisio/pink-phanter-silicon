@@ -21,6 +21,7 @@ _EXT_TO_LANG: dict[str, Lang] = {
 
 # ---- pure helpers ---------------------------------------------------------
 
+
 def detect_lang(path: str) -> Lang:
     ext = Path(path).suffix.lower()
     return _EXT_TO_LANG.get(ext, Lang.OTHER)
@@ -36,7 +37,7 @@ def file_exists(path: str) -> bool:
 
 def hash_file(path: str) -> str:
     h = hashlib.sha256()
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -68,6 +69,7 @@ def parent_dirs(path: str, root: str) -> list[str]:
 
 
 # ---- read / walk ----------------------------------------------------------
+
 
 def read_file(path: str) -> str:
     p = Path(path)
@@ -111,6 +113,7 @@ def walk_tree(root: str, ignore_patterns: set[str]) -> dict[str, FileEntry]:
 
 
 # ---- mutating operations --------------------------------------------------
+
 
 def write_file(path: str, content: str, dry_run: bool) -> bool:
     if dry_run:

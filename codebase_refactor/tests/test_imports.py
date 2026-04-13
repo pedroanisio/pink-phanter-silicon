@@ -1,14 +1,11 @@
 """Tests for codebase_refactor.extern.imports module."""
 
-import pytest
-
-from codebase_refactor.models import Lang
 from codebase_refactor.extern.imports import (
     extract_imports,
     resolve_import,
     rewrite_imports,
 )
-
+from codebase_refactor.models import Lang
 
 # ---------------------------------------------------------------------------
 # extract_imports -- Python
