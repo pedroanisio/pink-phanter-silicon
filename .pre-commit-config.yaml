@@ -9,5 +9,5 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML]
+        additional_dependencies: [types-PyYAML, pytest]
         args: [--strict]

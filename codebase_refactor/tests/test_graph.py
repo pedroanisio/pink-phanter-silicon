@@ -29,7 +29,7 @@ def test_build_reverse_graph_simple():
             return ["B_module"]
         return []
 
-    def resolve_fn(target: str, importer: str, idx: dict, lang: Lang) -> str | None:
+    def resolve_fn(target: str, importer: str, idx: dict[str, str], lang: Lang) -> str | None:
         return idx.get(target)
 
     def read_fn(rel_path: str) -> str:
@@ -50,7 +50,7 @@ def test_build_reverse_graph_no_imports():
     def extract_fn(source: str, lang: Lang) -> list[str]:
         return []
 
-    def resolve_fn(target: str, importer: str, idx: dict, lang: Lang) -> str | None:
+    def resolve_fn(target: str, importer: str, idx: dict[str, str], lang: Lang) -> str | None:
         return None
 
     def read_fn(rel_path: str) -> str:
@@ -67,7 +67,7 @@ def test_build_reverse_graph_unresolved():
     def extract_fn(source: str, lang: Lang) -> list[str]:
         return ["unknown_module"]
 
-    def resolve_fn(target: str, importer: str, idx: dict, lang: Lang) -> str | None:
+    def resolve_fn(target: str, importer: str, idx: dict[str, str], lang: Lang) -> str | None:
         return None
 
     def read_fn(rel_path: str) -> str:

@@ -389,5 +389,6 @@ class TestMoveStrategies:
 
         # Verify report shows 0 dirs cleaned
         engine._finalize_output()
+        assert engine.output.report_json is not None
         report = json.loads(engine.output.report_json)
         assert report["dirs_cleaned"] == 0
